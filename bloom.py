@@ -122,3 +122,18 @@ class BloomFilter(object):
         encoded_value = json.dumps(value, sort_keys=True)
         for seed in range(self.num_hashes()):
             yield mmh3.hash(encoded_value, seed=seed) % self.size()
+
+
+
+def main():                 # pragma: no cover
+    # Run the doctests in this module with:
+    #   $ source venv/bin/activate
+    #   $ python -m bloom
+    #   $ deactivate
+    import doctest
+    import sys
+    results = doctest.testmod()
+    sys.exit(bool(results.failed))
+
+if __name__ == '__main__':  # pragma: no cover
+    main()
