@@ -19,3 +19,29 @@ class BloomFilterTests(unittest.TestCase):
         assert bloom_filter.key.startswith(BloomFilter._RANDOM_KEY_PREFIX)
         assert bloom_filter.num_values == 100
         assert bloom_filter.false_positives == 0.01
+
+    def test_size(self):
+        bloom_filter = BloomFilter(num_values=100, false_positives=0.1)
+        assert bloom_filter.size() == 480
+
+        bloom_filter = BloomFilter(num_values=100, false_positives=0.01)
+        assert bloom_filter.size() == 959
+
+        bloom_filter = BloomFilter(num_values=1000, false_positives=0.1)
+        assert bloom_filter.size() == 4793
+
+        bloom_filter = BloomFilter(num_values=1000, false_positives=0.01)
+        assert bloom_filter.size() == 9586
+
+    def test_num_hashes(self):
+        bloom_filter = BloomFilter(num_values=100, false_positives=0.1)
+        assert bloom_filter.num_hashes() == 3
+
+        bloom_filter = BloomFilter(num_values=100, false_positives=0.01)
+        assert bloom_filter.num_hashes() == 7
+
+        bloom_filter = BloomFilter(num_values=1000, false_positives=0.1)
+        assert bloom_filter.num_hashes() == 3
+
+        bloom_filter = BloomFilter(num_values=1000, false_positives=0.01)
+        assert bloom_filter.num_hashes() == 7
