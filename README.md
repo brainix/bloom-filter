@@ -1,2 +1,4 @@
-# bloom-filter
-Prototype of how we can use a Bloom filter for @reddit's recently consumed feature.
+# Bloom filter
+
+Prototype of how we can use a Bloom filter for
+[@reddit](https://github.com/reddit)&rsquo;s recently consumed feature.
