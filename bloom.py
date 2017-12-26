@@ -9,6 +9,7 @@
 
 import collections
 import functools
+import math
 import random
 import string
 
@@ -47,3 +48,21 @@ class BloomFilter(object):
         suffix = ''.join(random_char() for _ in xrange(self._RANDOM_KEY_LENGTH))
         random_key = ''.join((self._RANDOM_KEY_PREFIX, suffix))
         return random_key
+
+    def size(self):
+        '''The required number of bits (m) given n and p.
+
+        This method returns the required number of bits (m) for the underlying
+        string representing this Bloom filter given the the number of elements
+        that you expect to insert (n) and your acceptable false positive
+        probability (p).
+
+        More about the formula that this method implements:
+            https://en.wikipedia.org/wiki/Bloom_filter#Optimal_number_of_hash_functions
+        '''
+        try:
+            return self._size
+        except AttributeError:
+            self._size = -self.num_values * math.log(self.false_positives) / math.log(2)**2
+            self._size = int(math.ceil(self._size))
+            return self.size()
