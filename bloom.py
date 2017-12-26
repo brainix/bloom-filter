@@ -33,7 +33,7 @@ class BloomFilter(object):
         self.false_positives = false_positives
         # TODO: self.update(iterable)
 
-    def __del__(self):
+    def __del__(self):  # pragma: no cover
         if self.key.startswith(self._RANDOM_KEY_PREFIX):
             self.memcache.delete(self.key)
 
