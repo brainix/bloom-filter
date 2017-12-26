@@ -27,7 +27,11 @@ class BloomFilter(object):
 
     def __init__(self, iterable=frozenset(), memcache=None, key=None,
                  num_values=100, false_positives=0.01):
-        self.memcache = memcache or Client(self._DEFAULT_MEMCACHE_SERVER)
+        self.memcache = memcache or Client(
+            self._DEFAULT_MEMCACHE_SERVER,
+            connect_timeout=1,
+            timeout=1,
+        )
         self.key = key or self._random_key()
         self.num_values = num_values
         self.false_positives = false_positives
