@@ -1,0 +1,14 @@
+#-----------------------------------------------------------------------------#
+#   requirements-to-freeze.txt                                                #
+#                                                                             #
+#   Copyright © 2017, Rajiv Bakulesh Shah, original author.                   #
+#   All rights reserved.                                                      #
+#-----------------------------------------------------------------------------#
+
+
+
+bitarray
+mmh3
+pymemcache
+
+coverage
