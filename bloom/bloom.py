@@ -114,12 +114,12 @@ class BloomFilter(object):
             (61L, 854L, 730L, 730L, 475L, 364L, 850L)
 
         Thus, if we want to insert the value 'rajiv' into our Bloom filter,
-        then we must set bits 183, 319, 787, 585, 8, 471, and 711 all to 1.  If
+        then we must set bits 17, 271, 669, 242, 166, 4, and 536 all to 1.  If
         any/all of them are already 1, no problems.
 
         Similarly, if we want to check to see if the value 'rajiv' is in our
-        Bloom filter, then we must check to see if the bits 183, 319, 787, 585,
-        8, 471, and 711 are all set to 1.  If even one of those bits is set to
+        Bloom filter, then we must check to see if the bits 17, 271, 669, 242,
+        166, 4, and 536 are all set to 1.  If even one of those bits is set to
         0, then the value 'rajiv' must never have been inserted into our Bloom
         filter.  But if all of those bits are set to 1, then the value 'rajiv'
         was *probably* inserted into our Bloom filter.
