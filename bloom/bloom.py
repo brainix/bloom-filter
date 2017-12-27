@@ -28,6 +28,7 @@ MemcacheServer = collections.namedtuple('MemcacheServer', ('hostname', 'port'))
 class BloomFilter(object):
     _DEFAULT_MEMCACHE_SERVER = MemcacheServer(hostname='localhost', port=11211)
     _RANDOM_KEY_PREFIX = 'bloom:'
+    _RANDOM_KEY_CHARS = ''.join((string.digits, string.ascii_lowercase))
     _RANDOM_KEY_LENGTH = 16
 
     def __init__(self, iterable=frozenset(), memcache=None, key=None,
@@ -40,17 +41,18 @@ class BloomFilter(object):
         self.key = key or self._random_key()
         self.num_values = num_values
         self.false_positives = false_positives
+        self._load_bit_array()
         self.update(iterable)
 
     def __del__(self):  # pragma: no cover
         if self.key.startswith(self._RANDOM_KEY_PREFIX):
             self.clear()
 
-    def _random_key(self):
-        all_chars = ''.join((string.digits, string.ascii_lowercase))
-        random_char = functools.partial(random.choice, all_chars)
-        suffix = ''.join(random_char() for _ in xrange(self._RANDOM_KEY_LENGTH))
-        random_key = ''.join((self._RANDOM_KEY_PREFIX, suffix))
+    @classmethod
+    def _random_key(cls):
+        random_char = functools.partial(random.choice, cls._RANDOM_KEY_CHARS)
+        suffix = ''.join(random_char() for _ in xrange(cls._RANDOM_KEY_LENGTH))
+        random_key = ''.join((cls._RANDOM_KEY_PREFIX, suffix))
         return random_key
 
     def size(self):
@@ -126,14 +128,19 @@ class BloomFilter(object):
         for seed in range(self.num_hashes()):
             yield mmh3.hash(encoded_value, seed=seed) % self.size()
 
-    def _bit_array(self):
+    def _load_bit_array(self):
         bit_string = self.memcache.get(self.key)
         if bit_string is None:
-            bit_array = bitarray('0' * self.size())
+            self._bit_array = bitarray('0' * self.size())
         else:
-            bit_array = bitarray()
-            bit_array.frombytes(bit_string)
-        return bit_array
+            self._bit_array = bitarray()
+            self._bit_array.frombytes(bit_string)
+
+    def _store_bit_array(self):
+        if self._bit_array.any():
+            self.memcache.set(self.key, self._bit_array.tobytes())
+        else:
+            self.memcache.delete(self.key)
 
     def add(self, value):
         '''Add an element to a BloomFilter.  O(k)
@@ -154,12 +161,9 @@ class BloomFilter(object):
         iterables, bit_offsets = tuple(iterables), set()
         for value in itertools.chain(*iterables):
             bit_offsets.update(self._bit_offsets(value))
-
-        bit_array = self._bit_array()
         for bit_offset in bit_offsets:
-            bit_array[bit_offset] = 1
-        bit_string = bit_array.tobytes()
-        self.memcache.set(self.key, bit_string)
+            self._bit_array[bit_offset] = 1
+        self._store_bit_array()
 
     def __contains__(self, value):
         '''bf.__contains__(element) <==> element in bf.  O(k)
@@ -169,13 +173,11 @@ class BloomFilter(object):
         representing this Bloom filter.
         '''
         bit_offsets = set(self._bit_offsets(value))
-
-        bit_array = self._bit_array()
-        bits = (bit_array[bit_offset] for bit_offset in bit_offsets)
-        return all(bits)
+        return all(self._bit_array[bit_offset] for bit_offset in bit_offsets)
 
     def clear(self):
-        self.memcache.delete(self.key)
+        self._bit_array.setall(0)
+        self._store_bit_array()
 
     def __len__(self):
         '''Return the approximate the number of elements in a BloomFilter.  O(m)
@@ -190,7 +192,7 @@ class BloomFilter(object):
         More about the formula that this method implements:
             https://en.wikipedia.org/wiki/Bloom_filter#Approximating_the_number_of_items_in_a_Bloom_filter
         '''
-        num_bits_set = self._bit_array().count()
+        num_bits_set = self._bit_array.count()
         len_ = -float(self.size()) / self.num_hashes() * math.log(1 - float(num_bits_set) / self.size())
         return int(math.floor(len_))
 
