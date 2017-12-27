@@ -176,3 +176,7 @@ class BloomFilterTests(unittest.TestCase):
 
         dilberts.clear()
         assert len(dilberts) == 0
+
+    def test_repr(self):
+        dilberts = BloomFilter(key='dilberts')
+        assert repr(dilberts) == '<BloomFilter key=dilberts>'

@@ -194,6 +194,10 @@ class BloomFilter(object):
         len_ = -float(self.size()) / self.num_hashes() * math.log(1 - float(num_bits_set) / self.size())
         return int(math.floor(len_))
 
+    def __repr__(self):
+        'Return the string representation of a BloomFilter.  O(1)'
+        return '<{} key={}>'.format(self.__class__.__name__, self.key)
+
 
 
 def main():                 # pragma: no cover
