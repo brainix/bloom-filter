@@ -31,7 +31,7 @@ class BloomFilter(object):
     _RANDOM_KEY_LENGTH = 16
 
     def __init__(self, iterable=frozenset(), memcache=None, key=None,
-                 num_values=100, false_positives=0.01):
+                 num_values=1000, false_positives=0.001):
         self.memcache = memcache or Client(
             self._DEFAULT_MEMCACHE_SERVER,
             connect_timeout=1,
@@ -176,6 +176,23 @@ class BloomFilter(object):
 
     def clear(self):
         self.memcache.delete(self.key)
+
+    def __len__(self):
+        '''Return the approximate the number of elements in a BloomFilter.  O(m)
+
+        Here, m is the size in bits of the underlying string representing this
+        Bloom filter.
+
+        Please note that this method returns an approximation, not an exact
+        value.  So please don't rely on it for anything important like
+        financial systems or cat gif websites.
+
+        More about the formula that this method implements:
+            https://en.wikipedia.org/wiki/Bloom_filter#Approximating_the_number_of_items_in_a_Bloom_filter
+        '''
+        num_bits_set = self._bit_array().count()
+        len_ = -float(self.size()) / self.num_hashes() * math.log(1 - float(num_bits_set) / self.size())
+        return int(math.floor(len_))
 
 
 
