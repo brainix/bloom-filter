@@ -17,21 +17,17 @@ class BloomFilterTests(unittest.TestCase):
     def test_init(self):
         dilberts = BloomFilter()
         assert dilberts.key.startswith(BloomFilter._RANDOM_KEY_PREFIX)
-        assert dilberts.num_values == 100
-        assert dilberts.false_positives == 0.01
+        assert dilberts.num_values == 1000
+        assert dilberts.false_positives == 0.001
         assert 'rajiv' not in dilberts
         assert 'raj' not in dilberts
         assert 'dan' not in dilberts
         assert 'eric' not in dilberts
 
     def test_init_with_iterable(self):
-        dilberts = BloomFilter(
-            {'rajiv', 'raj'},
-            num_values=100,
-            false_positives=0.01,
-        )
-        assert dilberts.num_values == 100
-        assert dilberts.false_positives == 0.01
+        dilberts = BloomFilter({'rajiv', 'raj'})
+        assert dilberts.num_values == 1000
+        assert dilberts.false_positives == 0.001
         assert 'rajiv' in dilberts
         assert 'raj' in dilberts
         assert 'dan' not in dilberts
@@ -64,7 +60,7 @@ class BloomFilterTests(unittest.TestCase):
         assert dilberts.num_hashes() == 7
 
     def test_membership(self):
-        dilberts = BloomFilter(num_values=100, false_positives=0.01)
+        dilberts = BloomFilter()
         assert 'rajiv' not in dilberts
         assert 'raj' not in dilberts
         assert 'dan' not in dilberts
@@ -107,7 +103,7 @@ class BloomFilterTests(unittest.TestCase):
         assert 'eric' in dilberts
 
     def test_update(self):
-        dilberts = BloomFilter(num_values=100, false_positives=0.01)
+        dilberts = BloomFilter()
         assert 'rajiv' not in dilberts
         assert 'raj' not in dilberts
         assert 'dan' not in dilberts
@@ -144,11 +140,7 @@ class BloomFilterTests(unittest.TestCase):
         assert 'rhodes' not in dilberts
 
     def test_clear(self):
-        dilberts = BloomFilter(
-            {'rajiv', 'raj'},
-            num_values=100,
-            false_positives=0.01,
-        )
+        dilberts = BloomFilter({'rajiv', 'raj'})
         assert 'rajiv' in dilberts
         assert 'raj' in dilberts
         assert 'dan' not in dilberts
@@ -159,3 +151,28 @@ class BloomFilterTests(unittest.TestCase):
         assert 'raj' not in dilberts
         assert 'dan' not in dilberts
         assert 'eric' not in dilberts
+
+    def test_len(self):
+        dilberts = BloomFilter()
+        assert len(dilberts) == 0
+
+        dilberts.add('rajiv')
+        assert len(dilberts) == 1
+
+        dilberts.add('raj')
+        assert len(dilberts) == 2
+
+        dilberts.add('rajiv')
+        assert len(dilberts) == 2
+
+        dilberts.add('raj')
+        assert len(dilberts) == 2
+
+        dilberts.add('dan')
+        assert len(dilberts) == 3
+
+        dilberts.add('eric')
+        assert len(dilberts) == 4
+
+        dilberts.clear()
+        assert len(dilberts) == 0
