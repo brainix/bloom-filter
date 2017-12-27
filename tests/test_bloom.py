@@ -237,30 +237,36 @@ class RecentlyConsumedTests(unittest.TestCase):
 
 
 
-class PersistentTests(unittest.TestCase):
+class StoreBitArrayTests(unittest.TestCase):
+    'Whenever we change a BloomFilter, ensure that we Memcache our changes.'
+
     def setUp(self):
-        super(PersistentTests, self).setUp()
+        super(StoreBitArrayTests, self).setUp()
         self.dilberts = BloomFilter({'rajiv', 'raj'}, key='dilberts')
 
     def tearDown(self):
         self.dilberts.clear()
-        super(PersistentTests, self).tearDown()
+        super(StoreBitArrayTests, self).tearDown()
 
-    def test_init_gets_persisted(self):
+    def test_init_gets_stored(self):
+        'When we __init__() on an iterable, ensure we Memcache the bit array'
         office_space = BloomFilter(key='dilberts')
         assert office_space._bit_array == self.dilberts._bit_array
 
-    def test_add_gets_persisted(self):
+    def test_add_gets_stored(self):
+        'When we add() an element, ensure that we Memcache the bit array'
         self.dilberts.add('dan')
         office_space = BloomFilter(key='dilberts')
         assert office_space._bit_array == self.dilberts._bit_array
 
-    def test_update_gets_persisted(self):
+    def test_update_gets_stored(self):
+        'When we update() with elements, ensure that we Memcache the bit array'
         self.dilberts.update({'dan', 'eric'})
         office_space = BloomFilter(key='dilberts')
         assert office_space._bit_array == self.dilberts._bit_array
 
-    def test_clear_gets_persisted(self):
+    def test_clear_gets_stored(self):
+        'When we clear() all elements, ensure we delete bit array from Memcache'
         self.dilberts.clear()
         office_space = BloomFilter(key='dilberts')
         assert office_space._bit_array == self.dilberts._bit_array
