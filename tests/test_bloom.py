@@ -168,7 +168,7 @@ class RecentlyConsumedTests(unittest.TestCase):
     "Simulate reddit's recently consumed problem to test our Bloom filter."
 
     def setUp(self):
-        super(RecentlyConsumedTests, self).setUp()
+        super(self.__class__, self).setUp()
 
         # Construct a set of links that the user has seen.
         self.seen_links = set()
@@ -241,12 +241,12 @@ class StoreBitArrayTests(unittest.TestCase):
     'Whenever we change a BloomFilter, ensure that we Memcache our changes.'
 
     def setUp(self):
-        super(StoreBitArrayTests, self).setUp()
+        super(self.__class__, self).setUp()
         self.dilberts = BloomFilter({'rajiv', 'raj'}, key='dilberts')
 
     def tearDown(self):
         self.dilberts.clear()
-        super(StoreBitArrayTests, self).tearDown()
+        super(self.__class__, self).tearDown()
 
     def test_init_gets_stored(self):
         'When we __init__() on an iterable, ensure we Memcache the bit array'
