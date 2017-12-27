@@ -25,13 +25,13 @@ class BloomFilterTests(unittest.TestCase):
         assert bloom_filter.size() == 480
 
         bloom_filter = BloomFilter(num_values=100, false_positives=0.01)
-        assert bloom_filter.size() == 959
+        assert bloom_filter.size() == 960
 
         bloom_filter = BloomFilter(num_values=1000, false_positives=0.1)
-        assert bloom_filter.size() == 4793
+        assert bloom_filter.size() == 4800
 
         bloom_filter = BloomFilter(num_values=1000, false_positives=0.01)
-        assert bloom_filter.size() == 9586
+        assert bloom_filter.size() == 9592
 
     def test_num_hashes(self):
         bloom_filter = BloomFilter(num_values=100, false_positives=0.1)
