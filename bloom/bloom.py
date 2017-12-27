@@ -67,6 +67,7 @@ class BloomFilter(object):
         except AttributeError:
             self._size = -self.num_values * math.log(self.false_positives) / math.log(2)**2
             self._size = int(math.ceil(self._size))
+            self._size = self._size + (8 - self._size % 8) % 8
             return self.size()
 
     def num_hashes(self):
@@ -102,11 +103,11 @@ class BloomFilter(object):
         Now let's look at a few examples:
 
             >>> tuple(dilberts._bit_offsets('rajiv'))
-            (183L, 319L, 787L, 585L, 8L, 471L, 711L)
+            (17L, 271L, 669L, 242L, 166L, 4L, 536L)
             >>> tuple(dilberts._bit_offsets('raj'))
-            (482L, 875L, 725L, 667L, 109L, 714L, 595L)
+            (521L, 491L, 440L, 871L, 938L, 682L, 455L)
             >>> tuple(dilberts._bit_offsets('dan'))
-            (687L, 925L, 954L, 707L, 615L, 914L, 620L)
+            (61L, 854L, 730L, 730L, 475L, 364L, 850L)
 
         Thus, if we want to insert the value 'rajiv' into our Bloom filter,
         then we must set bits 183, 319, 787, 585, 8, 471, and 711 all to 1.  If
