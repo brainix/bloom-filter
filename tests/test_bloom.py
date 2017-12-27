@@ -208,12 +208,11 @@ class RecentlyConsumedTests(unittest.TestCase):
 
         # Initialize the recently consumed Bloom filter on the seen set.
         self.recently_consumed = BloomFilter(
+            self.seen_links,
             num_values=len(self.seen_links),
             false_positives=0.001,
             key='recently-consumed',
         )
-        self.recently_consumed.clear()
-        self.recently_consumed.update(self.seen_links)
 
     def tearDown(self):
         self.recently_consumed.clear()
@@ -257,3 +256,33 @@ class RecentlyConsumedTests(unittest.TestCase):
 
         message = 'acceptable: {}; actual: {}'.format(acceptable, actual)
         assert actual <= acceptable, message
+
+
+
+class PersistentTests(unittest.TestCase):
+    def setUp(self):
+        super(PersistentTests, self).setUp()
+        self.dilberts = BloomFilter({'rajiv', 'raj'}, key='dilberts')
+
+    def tearDown(self):
+        self.dilberts.clear()
+        super(PersistentTests, self).tearDown()
+
+    def test_init_gets_persisted(self):
+        office_space = BloomFilter(key='dilberts')
+        assert office_space._bit_array == self.dilberts._bit_array
+
+    def test_add_gets_persisted(self):
+        self.dilberts.add('dan')
+        office_space = BloomFilter(key='dilberts')
+        assert office_space._bit_array == self.dilberts._bit_array
+
+    def test_update_gets_persisted(self):
+        self.dilberts.update({'dan', 'eric'})
+        office_space = BloomFilter(key='dilberts')
+        assert office_space._bit_array == self.dilberts._bit_array
+
+    def test_clear_gets_persisted(self):
+        self.dilberts.clear()
+        office_space = BloomFilter(key='dilberts')
+        assert office_space._bit_array == self.dilberts._bit_array
