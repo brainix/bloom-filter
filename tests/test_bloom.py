@@ -7,6 +7,9 @@
 
 
 
+import math
+import random
+import string
 import unittest
 
 from bloom import BloomFilter
@@ -180,3 +183,77 @@ class BloomFilterTests(unittest.TestCase):
     def test_repr(self):
         dilberts = BloomFilter(key='dilberts')
         assert repr(dilberts) == '<BloomFilter key=dilberts>'
+
+
+
+class RecentlyConsumedTests(unittest.TestCase):
+    "Simulate reddit's recently consumed problem to test our Bloom filter."
+
+    def setUp(self):
+        super(RecentlyConsumedTests, self).setUp()
+
+        # Construct a set of links that the user has seen.
+        self.seen_links = set()
+        while len(self.seen_links) < 1000:
+            fullname = self.random_fullname()
+            self.seen_links.add(fullname)
+
+        # Construct a set of links that the user hasn't seen.  Ensure that
+        # there's no intersection between the seen set and the unseen set.
+        self.unseen_links = set()
+        while len(self.unseen_links) < 1000:
+            fullname = self.random_fullname()
+            if fullname not in self.seen_links:
+                self.unseen_links.add(fullname)
+
+        # Initialize the recently consumed Bloom filter on the seen set.
+        self.recently_consumed = BloomFilter(
+            num_values=len(self.seen_links),
+            false_positives=0.001,
+            key='recently-consumed',
+        )
+        self.recently_consumed.clear()
+        self.recently_consumed.update(self.seen_links)
+
+    def tearDown(self):
+        self.recently_consumed.clear()
+
+    @staticmethod
+    def random_fullname(prefix='t3_', size=6):
+        alphabet, id36 = string.digits + string.ascii_lowercase, []
+        for _ in xrange(size):
+            id36.append(random.choice(alphabet))
+        return prefix + ''.join(id36)
+
+    @staticmethod
+    def round(number, sig_digits=1):
+        '''Round a float to the specified number of significant digits.
+
+        Reference implementation:
+            https://github.com/ActiveState/code/blob/3b27230f418b714bc9a0f897cb8ea189c3515e99/recipes/Python/578114_Round_number_specified_number_significant/recipe-578114.py
+        '''
+        try:
+            ndigits = sig_digits - 1 - int(math.floor(math.log10(abs(number))))
+        except ValueError:
+            # math.log10(number) raised a ValueError, so number must be 0.0.
+            # No need to round 0.0.
+            return number
+        else:
+            return round(number, ndigits)
+
+    def test_zero_false_negatives(self):
+        'Ensure that we produce zero false negatives.'
+        for seen_link in self.seen_links:
+            assert seen_link in self.recently_consumed
+
+    def test_acceptable_false_positives(self):
+        'Ensure that we produce false positives at an acceptable rate.'
+        acceptable, actual = self.recently_consumed.false_positives, 0
+
+        for unseen_link in self.unseen_links:
+            actual += unseen_link in self.recently_consumed
+        actual /= float(len(self.unseen_links))
+        actual = self.round(actual, sig_digits=1)
+
+        message = 'acceptable: {}; actual: {}'.format(acceptable, actual)
+        assert actual <= acceptable, message
