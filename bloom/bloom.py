@@ -9,12 +9,14 @@
 
 import collections
 import functools
+import itertools
 import json
 import math
 import random
 import string
 
 import mmh3
+from bitarray import bitarray
 from pymemcache.client.base import Client
 
 
@@ -38,11 +40,11 @@ class BloomFilter(object):
         self.key = key or self._random_key()
         self.num_values = num_values
         self.false_positives = false_positives
-        # TODO: self.update(iterable)
+        self.update(iterable)
 
     def __del__(self):  # pragma: no cover
         if self.key.startswith(self._RANDOM_KEY_PREFIX):
-            self.memcache.delete(self.key)
+            self.clear()
 
     def _random_key(self):
         all_chars = ''.join((string.digits, string.ascii_lowercase))
@@ -123,6 +125,57 @@ class BloomFilter(object):
         encoded_value = json.dumps(value, sort_keys=True)
         for seed in range(self.num_hashes()):
             yield mmh3.hash(encoded_value, seed=seed) % self.size()
+
+    def _bit_array(self):
+        bit_string = self.memcache.get(self.key)
+        if bit_string is None:
+            bit_array = bitarray('0' * self.size())
+        else:
+            bit_array = bitarray()
+            bit_array.frombytes(bit_string)
+        return bit_array
+
+    def add(self, value):
+        '''Add an element to a BloomFilter.  O(k)
+
+        Here, k is the number of times to run our hash functions on a given
+        input string to compute bit offests into the underlying string
+        representing this Bloom filter.
+        '''
+        self.update({value})
+
+    def update(self, *iterables):
+        '''Populate a Bloom filter with the elements in iterables.  O(n * k)
+
+        Here, n is the number of elements in iterables that you want to insert
+        into this Bloom filter, and k is the number of times to run our hash
+        functions on each element.
+        '''
+        iterables, bit_offsets = tuple(iterables), set()
+        for value in itertools.chain(*iterables):
+            bit_offsets.update(self._bit_offsets(value))
+
+        bit_array = self._bit_array()
+        for bit_offset in bit_offsets:
+            bit_array[bit_offset] = 1
+        bit_string = bit_array.tobytes()
+        self.memcache.set(self.key, bit_string)
+
+    def __contains__(self, value):
+        '''bf.__contains__(element) <==> element in bf.  O(k)
+
+        Here, k is the number of times to run our hash functions on a given
+        input string to compute bit offests into the underlying string
+        representing this Bloom filter.
+        '''
+        bit_offsets = set(self._bit_offsets(value))
+
+        bit_array = self._bit_array()
+        bits = (bit_array[bit_offset] for bit_offset in bit_offsets)
+        return all(bits)
+
+    def clear(self):
+        self.memcache.delete(self.key)
 
 
 
