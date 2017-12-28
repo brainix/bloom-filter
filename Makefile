@@ -59,7 +59,8 @@ test:
 ifeq ($(tests),)
 	source $(venv)/bin/activate && \
 		coverage run -m unittest discover --start-directory tests --verbose && \
-		coverage report
+		coverage report && \
+		pyflakes bloom/*\.py tests/*\.py
 else
 	source $(venv)/bin/activate && \
 		python -m unittest --verbose $(tests)

@@ -12,3 +12,4 @@ mmh3
 pymemcache
 
 coverage
+pyflakes

@@ -172,14 +172,14 @@ class RecentlyConsumedTests(unittest.TestCase):
 
         # Construct a set of links that the user has seen.
         self.seen_links = set()
-        while len(self.seen_links) < 1000:
+        while len(self.seen_links) < 100:
             fullname = self.random_fullname()
             self.seen_links.add(fullname)
 
         # Construct a set of links that the user hasn't seen.  Ensure that
         # there's no intersection between the seen set and the unseen set.
         self.unseen_links = set()
-        while len(self.unseen_links) < 1000:
+        while len(self.unseen_links) < 100:
             fullname = self.random_fullname()
             if fullname not in self.seen_links:
                 self.unseen_links.add(fullname)
@@ -187,13 +187,14 @@ class RecentlyConsumedTests(unittest.TestCase):
         # Initialize the recently consumed Bloom filter on the seen set.
         self.recently_consumed = BloomFilter(
             self.seen_links,
-            num_values=len(self.seen_links),
+            num_values=1000,
             false_positives=0.001,
             key='recently-consumed',
         )
 
     def tearDown(self):
         self.recently_consumed.clear()
+        super(self.__class__, self).tearDown()
 
     @staticmethod
     def random_fullname(prefix='t3_', size=6):
