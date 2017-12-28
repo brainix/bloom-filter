@@ -259,6 +259,11 @@ class BloomFilter(object):
         return all(self._bit_array[bit_offset] for bit_offset in bit_offsets)
 
     def clear(self):
+        '''Remove all elements from this Bloom filter.  O(m)
+
+        Here, m is the size in bits of the underlying string representing this
+        Bloom filter.
+        '''
         self._bit_array.setall(0)
         self._store_bit_array()
 
