@@ -1,6 +1,7 @@
 bitarray==0.8.1
 coverage==4.4.2
 mmh3==2.5.1
+pyflakes==1.6.0
 pymemcache==1.4.3
 six==1.11.0
 virtualenv==15.1.0

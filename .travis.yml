@@ -14,3 +14,4 @@ services: memcached
 script:
     - coverage run -m unittest discover --start-directory tests --verbose
     - coverage report
+    - pyflakes bloom/*\.py tests/*\.py
