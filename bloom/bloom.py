@@ -40,7 +40,8 @@ class BloomFilter(object):
     generate false negatives (so every time that they report that you haven't
     seen a particular element before, you really must never have seen it).  You
     can tune your acceptable false positive probability, though at the expense
-    of the storage size of your Bloom filter.
+    of the storage size and the element insertion/lookup time of your Bloom
+    filter.
 
     Wikipedia article:
         https://en.wikipedia.org/wiki/Bloom_filter
@@ -60,13 +61,17 @@ class BloomFilter(object):
     Here, num_values represents the number of elements that you expect to
     insert into your BloomFilter, and false_positives represents your
     acceptable false positive probability.  Using these two parameters,
-    BloomFilter automatically computes its own storage size such that it can
+    BloomFilter automatically computes its own storage size and number of times
+    to run its hash functions on element insertion/lookup such that it can
     guarantee a false positive rate at or below what you can tolerate, given
     that you're going to insert your specified number of elements.
 
     Insert an element into the Bloom filter:
 
         >>> dilberts.add('rajiv')
+
+    This Bloom filter implementation supports elements of any type that can be
+    dumped as JSON.
 
     Test for membership in the Bloom filter:
 
@@ -77,7 +82,7 @@ class BloomFilter(object):
         >>> 'dan' in dilberts
         False
 
-    See how many elements we've inserted into the Bloom filter:
+    See how many elements you've inserted into the Bloom filter:
 
         >>> len(dilberts)
         1
@@ -88,14 +93,6 @@ class BloomFilter(object):
     Insert multiple elements into the Bloom filter:
 
         >>> dilberts.update({'raj', 'dan'})
-        >>> 'rajiv' in dilberts
-        True
-        >>> 'raj' in dilberts
-        True
-        >>> 'dan' in dilberts
-        True
-        >>> len(dilberts)
-        3
 
     I recommend using BloomFilter.update() to insert multiple elements into the
     Bloom filter (over repeated BloomFilter.add() calls) as
@@ -104,7 +101,7 @@ class BloomFilter(object):
     Bloom filter to Memcache, inserting another element, storing the Bloom
     filter to Memcache again, etc.).
 
-    Clean up Memcache after the doctest:
+    Remove all of the elements from the Bloom filter:
 
         >>> dilberts.clear()
     '''
@@ -231,6 +228,8 @@ class BloomFilter(object):
         Here, k is the number of times to run our hash functions on a given
         input string to compute bit offests into the underlying string
         representing this Bloom filter.
+
+        Your element can be of any type that can be dumped as JSON.
         '''
         self.update({value})
 
@@ -240,6 +239,8 @@ class BloomFilter(object):
         Here, n is the number of elements in iterables that you want to insert
         into this Bloom filter, and k is the number of times to run our hash
         functions on each element.
+
+        Your elements can be of any type that can be dumped as JSON.
         '''
         iterables, bit_offsets = tuple(iterables), set()
         for value in itertools.chain(*iterables):
@@ -254,6 +255,8 @@ class BloomFilter(object):
         Here, k is the number of times to run our hash functions on a given
         input string to compute bit offests into the underlying string
         representing this Bloom filter.
+
+        Your element can be of any type that can be dumped as JSON.
         '''
         bit_offsets = set(self._bit_offsets(value))
         return all(self._bit_array[bit_offset] for bit_offset in bit_offsets)
