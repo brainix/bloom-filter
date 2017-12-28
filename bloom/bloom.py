@@ -26,6 +26,89 @@ MemcacheServer = collections.namedtuple('MemcacheServer', ('hostname', 'port'))
 
 
 class BloomFilter(object):
+    '''Memcache-backed Bloom filter with an API similar to Python sets.
+
+    Bloom filters are a powerful data structure that help you to answer the
+    question, "Have I seen this element before?" but not the question, "What
+    are all of the elements that I've seen before?"  So think of Bloom filters
+    as Python sets that you can add elements to and use to test element
+    membership, but that you can't iterate through or get elements back out of.
+
+    Bloom filters are probabilistic, which means that they can sometimes
+    generate false positives (as in, they may report that you've seen a
+    particular element before even though you haven't).  But they will never
+    generate false negatives (so every time that they report that you haven't
+    seen a particular element before, you really must never have seen it).  You
+    can tune your acceptable false positive probability, though at the expense
+    of the storage size of your Bloom filter.
+
+    Wikipedia article:
+        https://en.wikipedia.org/wiki/Bloom_filter
+
+    Reference implementation:
+        http://www.maxburstein.com/blog/creating-a-simple-bloom-filter/
+
+    Instantiate a Bloom filter and clean up Memcache before the doctest:
+
+        >>> dilberts = BloomFilter(
+        ...     num_values=1000,
+        ...     false_positives=0.001,
+        ...     key='dilberts',
+        ... )
+        >>> dilberts.clear()
+
+    Here, num_values represents the number of elements that you expect to
+    insert into your BloomFilter, and false_positives represents your
+    acceptable false positive probability.  Using these two parameters,
+    BloomFilter automatically computes its own storage size such that it can
+    guarantee a false positive rate at or below what you can tolerate, given
+    that you're going to insert your specified number of elements.
+
+    Insert an element into the Bloom filter:
+
+        >>> dilberts.add('rajiv')
+
+    Test for membership in the Bloom filter:
+
+        >>> 'rajiv' in dilberts
+        True
+        >>> 'raj' in dilberts
+        False
+        >>> 'dan' in dilberts
+        False
+
+    See how many elements we've inserted into the Bloom filter:
+
+        >>> len(dilberts)
+        1
+
+    Note that BloomFilter.__len__() is an approximation, so please don't rely
+    on it for anything important like financial systems or cat gif websites.
+
+    Insert multiple elements into the Bloom filter:
+
+        >>> dilberts.update({'raj', 'dan'})
+        >>> 'rajiv' in dilberts
+        True
+        >>> 'raj' in dilberts
+        True
+        >>> 'dan' in dilberts
+        True
+        >>> len(dilberts)
+        3
+
+    I recommend using BloomFilter.update() to insert multiple elements into the
+    Bloom filter (over repeated BloomFilter.add() calls) as
+    BloomFilter.update() inserts all of the elements and then stores the Bloom
+    filter to Memcache once (rather than inserting one element, storing the
+    Bloom filter to Memcache, inserting another element, storing the Bloom
+    filter to Memcache again, etc.).
+
+    Clean up Memcache after the doctest:
+
+        >>> dilberts.clear()
+    '''
+
     _DEFAULT_MEMCACHE_SERVER = MemcacheServer(hostname='localhost', port=11211)
     _RANDOM_KEY_PREFIX = 'bloom:'
     _RANDOM_KEY_CHARS = ''.join((string.digits, string.ascii_lowercase))
