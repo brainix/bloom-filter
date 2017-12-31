@@ -26,6 +26,7 @@ storage size and the element insertion/lookup time of your Bloom filter.
 
 * [Wikipedia Article](https://en.wikipedia.org/wiki/Bloom_filter)
 * [Reference Implementation](http://www.maxburstein.com/blog/creating-a-simple-bloom-filter/)
+* [Medium Post](https://blog.medium.com/what-are-bloom-filters-1ec2a50c68ff)
 
 ## Usage
 
