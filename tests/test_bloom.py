@@ -186,14 +186,15 @@ class RecentlyConsumedTests(unittest.TestCase):
 
         # Initialize the recently consumed Bloom filter on the seen set.
         self.recently_consumed = BloomFilter(
-            self.seen_links,
             num_values=1000,
             false_positives=0.001,
             key='recently-consumed',
         )
+        self.recently_consumed.clear()
+        self.recently_consumed.update(self.seen_links)
 
     def tearDown(self):
-        self.recently_consumed.clear()
+        self.recently_consumed.memcache.delete(self.recently_consumed.key)
         super(self.__class__, self).tearDown()
 
     @staticmethod
@@ -246,7 +247,7 @@ class StoreBitArrayTests(unittest.TestCase):
         self.dilberts = BloomFilter({'rajiv', 'raj'}, key='dilberts')
 
     def tearDown(self):
-        self.dilberts.clear()
+        self.dilberts.memcache.delete(self.dilberts.key)
         super(self.__class__, self).tearDown()
 
     def test_init_gets_stored(self):
@@ -267,7 +268,56 @@ class StoreBitArrayTests(unittest.TestCase):
         assert office_space._bit_array == self.dilberts._bit_array
 
     def test_clear_gets_stored(self):
-        'When we clear() all elements, ensure we delete bit array from Memcache'
+        'When we clear() all elements, ensure that we Memcache the bit array'
         self.dilberts.clear()
         office_space = BloomFilter(key='dilberts')
         assert office_space._bit_array == self.dilberts._bit_array
+
+
+
+class CheckAndSetTests(unittest.TestCase):
+    def setUp(self):
+        super(self.__class__, self).setUp()
+        self.thread1 = BloomFilter(key='dilberts')
+        self.thread1.clear()
+        self.thread2 = BloomFilter(key='dilberts')
+
+    def tearDown(self):
+        self.thread1.memcache.delete(self.thread1.key)
+        super(self.__class__, self).tearDown()
+
+    def test_check_and_set(self):
+        "Ensure that multiple threads don't stomp each other's changes"
+
+        # Let's simulate instantiating BloomFilters in two threads, both
+        # pointed at the same Memcache key.  I've named these BloomFilters
+        # self.thread1 and self.thread2 for clarity's sake.
+
+        # When we update the BloomFilter in thread 1, ...
+        self.thread1.update({'rajiv', 'raj'})
+
+        # ... notice that the BloomFilter in thread 2 doesn't automatically get
+        # updated:
+        assert 'rajiv' not in self.thread2
+        assert 'raj' not in self.thread2
+
+        # But now when we update the BloomFilter in thread 2, ...
+        self.thread2.update({'dan', 'eric'})
+
+        # ... notice that this BloomFilter in thread 2 first pulls in thread
+        # 1's changes, then applies its own:
+        assert 'rajiv' in self.thread2
+        assert 'raj' in self.thread2
+        assert 'dan' in self.thread2
+        assert 'eric' in self.thread2
+
+        # So even though our local BloomFilter objects might get out of sync,
+        # ...
+        assert 'dan' not in self.thread1
+        assert 'eric' not in self.thread1
+
+        # ... whenever we update them, we first merge in changes from Memcache,
+        # which is always in sync:
+        self.thread1.update({'jenny', 'will'})
+        assert 'dan' in self.thread1
+        assert 'eric' in self.thread1

@@ -19,6 +19,8 @@ import mmh3
 from bitarray import bitarray
 from pymemcache.client.base import Client
 
+from .exceptions import CheckAndSetError
+
 
 
 MemcacheServer = collections.namedtuple('MemcacheServer', ('hostname', 'port'))
@@ -209,18 +211,37 @@ class BloomFilter(object):
             yield mmh3.hash(encoded_value, seed=seed) % self.size()
 
     def _load_bit_array(self):
-        bit_string = self.memcache.get(self.key)
+        bit_string, self._cas = self.memcache.gets(self.key)
         if bit_string is None:
             self._bit_array = bitarray('0' * self.size())
+            self._store_bit_array()
         else:
             self._bit_array = bitarray()
             self._bit_array.frombytes(bit_string)
 
     def _store_bit_array(self):
-        if self._bit_array.any():
-            self.memcache.set(self.key, self._bit_array.tobytes())
+        bit_string = self._bit_array.tobytes()
+        if self._cas is None:
+            self.memcache.set(self.key, bit_string)
         else:
-            self.memcache.delete(self.key)
+            if not self.memcache.cas(self.key, bit_string, self._cas):
+                raise CheckAndSetError(memcache=self.memcache, key=self.key)
+        self._load_bit_array()
+
+    def _retry_check_and_set(num_tries=3):
+        def decorator(func):
+            @functools.wraps(func)
+            def wrapper(self, *args, **kwargs):
+                for try_num in xrange(num_tries):   # pragma: no cover
+                    try:
+                        return func(self, *args, **kwargs)
+                    except CheckAndSetError:
+                        if try_num < num_tries - 1:
+                            self._load_bit_array()
+                        else:
+                            raise
+            return wrapper
+        return decorator
 
     def add(self, value):
         '''Add an element to a BloomFilter.  O(k)
@@ -233,6 +254,7 @@ class BloomFilter(object):
         '''
         self.update({value})
 
+    @_retry_check_and_set()
     def update(self, *iterables):
         '''Populate a Bloom filter with the elements in iterables.  O(n * k)
 
@@ -242,7 +264,7 @@ class BloomFilter(object):
 
         Your elements can be of any type that can be dumped as JSON.
         '''
-        iterables, bit_offsets = tuple(iterables), set()
+        bit_offsets = set()
         for value in itertools.chain(*iterables):
             bit_offsets.update(self._bit_offsets(value))
         for bit_offset in bit_offsets:
@@ -261,6 +283,7 @@ class BloomFilter(object):
         bit_offsets = set(self._bit_offsets(value))
         return all(self._bit_array[bit_offset] for bit_offset in bit_offsets)
 
+    @_retry_check_and_set()
     def clear(self):
         '''Remove all elements from this Bloom filter.  O(m)
 
