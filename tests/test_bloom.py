@@ -199,9 +199,9 @@ class RecentlyConsumedTests(unittest.TestCase):
 
     @staticmethod
     def random_fullname(prefix='t3_', size=6):
-        alphabet, id36 = string.digits + string.ascii_lowercase, []
+        alphabet36, id36 = string.digits + string.ascii_lowercase, []
         for _ in xrange(size):
-            id36.append(random.choice(alphabet))
+            id36.append(random.choice(alphabet36))
         return prefix + ''.join(id36)
 
     @staticmethod
