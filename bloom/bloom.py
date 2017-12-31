@@ -207,7 +207,7 @@ class BloomFilter(object):
         was *probably* inserted into our Bloom filter.
         '''
         encoded_value = json.dumps(value, sort_keys=True)
-        for seed in range(self.num_hashes()):
+        for seed in xrange(self.num_hashes()):
             yield mmh3.hash(encoded_value, seed=seed) % self.size()
 
     def _load_bit_array(self):
