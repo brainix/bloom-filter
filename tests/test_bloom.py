@@ -221,12 +221,12 @@ class RecentlyConsumedTests(unittest.TestCase):
             return round(number, ndigits)
 
     def test_zero_false_negatives(self):
-        'Ensure that we produce zero false negatives.'
+        'Ensure that we produce zero false negatives'
         for seen_link in self.seen_links:
             assert seen_link in self.recently_consumed
 
     def test_acceptable_false_positives(self):
-        'Ensure that we produce false positives at an acceptable rate.'
+        'Ensure that we produce false positives at an acceptable rate'
         acceptable, actual = self.recently_consumed.false_positives, 0
 
         for unseen_link in self.unseen_links:
