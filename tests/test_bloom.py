@@ -6,14 +6,12 @@
 #-----------------------------------------------------------------------------#
 
 
-
 import math
 import random
 import string
 import unittest
 
 from bloom import BloomFilter
-
 
 
 class BloomFilterTests(unittest.TestCase):
@@ -163,7 +161,6 @@ class BloomFilterTests(unittest.TestCase):
         assert repr(dilberts) == '<BloomFilter key=dilberts>'
 
 
-
 class RecentlyConsumedTests(unittest.TestCase):
     "Simulate reddit's recently consumed problem to test our Bloom filter."
 
@@ -238,7 +235,6 @@ class RecentlyConsumedTests(unittest.TestCase):
         assert actual <= acceptable, message
 
 
-
 class StoreBitArrayTests(unittest.TestCase):
     'Whenever we change a BloomFilter, ensure that we Memcache our changes.'
 
@@ -272,7 +268,6 @@ class StoreBitArrayTests(unittest.TestCase):
         self.dilberts.clear()
         office_space = BloomFilter(key='dilberts')
         assert office_space._bit_array == self.dilberts._bit_array
-
 
 
 class CheckAndSetTests(unittest.TestCase):

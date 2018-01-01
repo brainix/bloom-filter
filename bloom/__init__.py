@@ -6,11 +6,9 @@
 #-----------------------------------------------------------------------------#
 
 
-
 from .bloom import BloomFilter
 from .exceptions import BloomFilterException
 from .exceptions import CheckAndSetError
-
 
 
 __all__ = ['BloomFilter', 'BloomFilterException', 'CheckAndSetError']

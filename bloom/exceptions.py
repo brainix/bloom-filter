@@ -6,7 +6,6 @@
 #-----------------------------------------------------------------------------#
 
 
-
 class BloomFilterException(Exception):
     def __init__(self, memcache=None, key=None, retriable=False):
         super(BloomFilterException, self).__init__()
@@ -20,7 +19,6 @@ class BloomFilterException(Exception):
             self.key,
             self.retriable,
         )
-
 
 
 class CheckAndSetError(BloomFilterException):

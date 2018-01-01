@@ -6,7 +6,6 @@
 #-----------------------------------------------------------------------------#
 
 
-
 import collections
 import functools
 import itertools
@@ -22,9 +21,7 @@ from pymemcache.client.base import Client
 from .exceptions import CheckAndSetError
 
 
-
 MemcacheServer = collections.namedtuple('MemcacheServer', ('hostname', 'port'))
-
 
 
 class BloomFilter(object):
@@ -313,7 +310,6 @@ class BloomFilter(object):
     def __repr__(self):
         'Return the string representation of a BloomFilter.  O(1)'
         return '<{} key={}>'.format(self.__class__.__name__, self.key)
-
 
 
 def main():                 # pragma: no cover
