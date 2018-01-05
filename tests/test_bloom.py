@@ -1,10 +1,9 @@
 #-----------------------------------------------------------------------------#
 #   test_bloom.py                                                             #
 #                                                                             #
-#   Copyright (c) 2017, Rajiv Bakulesh Shah, original author.                 #
+#   Copyright (c) 2017-2018, Rajiv Bakulesh Shah, original author.            #
 #   All rights reserved.                                                      #
 #-----------------------------------------------------------------------------#
-
 
 
 import math
@@ -13,7 +12,6 @@ import string
 import unittest
 
 from bloom import BloomFilter
-
 
 
 class BloomFilterTests(unittest.TestCase):
@@ -163,7 +161,6 @@ class BloomFilterTests(unittest.TestCase):
         assert repr(dilberts) == '<BloomFilter key=dilberts>'
 
 
-
 class RecentlyConsumedTests(unittest.TestCase):
     "Simulate reddit's recently consumed problem to test our Bloom filter."
 
@@ -186,21 +183,22 @@ class RecentlyConsumedTests(unittest.TestCase):
 
         # Initialize the recently consumed Bloom filter on the seen set.
         self.recently_consumed = BloomFilter(
-            self.seen_links,
             num_values=1000,
             false_positives=0.001,
             key='recently-consumed',
         )
+        self.recently_consumed.clear()
+        self.recently_consumed.update(self.seen_links)
 
     def tearDown(self):
-        self.recently_consumed.clear()
+        self.recently_consumed.memcache.delete(self.recently_consumed.key)
         super(self.__class__, self).tearDown()
 
     @staticmethod
     def random_fullname(prefix='t3_', size=6):
-        alphabet, id36 = string.digits + string.ascii_lowercase, []
+        alphabet36, id36 = string.digits + string.ascii_lowercase, []
         for _ in xrange(size):
-            id36.append(random.choice(alphabet))
+            id36.append(random.choice(alphabet36))
         return prefix + ''.join(id36)
 
     @staticmethod
@@ -220,12 +218,12 @@ class RecentlyConsumedTests(unittest.TestCase):
             return round(number, ndigits)
 
     def test_zero_false_negatives(self):
-        'Ensure that we produce zero false negatives.'
+        'Ensure that we produce zero false negatives'
         for seen_link in self.seen_links:
             assert seen_link in self.recently_consumed
 
     def test_acceptable_false_positives(self):
-        'Ensure that we produce false positives at an acceptable rate.'
+        'Ensure that we produce false positives at an acceptable rate'
         acceptable, actual = self.recently_consumed.false_positives, 0
 
         for unseen_link in self.unseen_links:
@@ -237,7 +235,6 @@ class RecentlyConsumedTests(unittest.TestCase):
         assert actual <= acceptable, message
 
 
-
 class StoreBitArrayTests(unittest.TestCase):
     'Whenever we change a BloomFilter, ensure that we Memcache our changes.'
 
@@ -246,7 +243,7 @@ class StoreBitArrayTests(unittest.TestCase):
         self.dilberts = BloomFilter({'rajiv', 'raj'}, key='dilberts')
 
     def tearDown(self):
-        self.dilberts.clear()
+        self.dilberts.memcache.delete(self.dilberts.key)
         super(self.__class__, self).tearDown()
 
     def test_init_gets_stored(self):
@@ -267,7 +264,55 @@ class StoreBitArrayTests(unittest.TestCase):
         assert office_space._bit_array == self.dilberts._bit_array
 
     def test_clear_gets_stored(self):
-        'When we clear() all elements, ensure we delete bit array from Memcache'
+        'When we clear() all elements, ensure that we Memcache the bit array'
         self.dilberts.clear()
         office_space = BloomFilter(key='dilberts')
         assert office_space._bit_array == self.dilberts._bit_array
+
+
+class CheckAndSetTests(unittest.TestCase):
+    def setUp(self):
+        super(self.__class__, self).setUp()
+        self.thread1 = BloomFilter(key='dilberts')
+        self.thread1.clear()
+        self.thread2 = BloomFilter(key='dilberts')
+
+    def tearDown(self):
+        self.thread1.memcache.delete(self.thread1.key)
+        super(self.__class__, self).tearDown()
+
+    def test_check_and_set(self):
+        "Ensure that multiple threads don't stomp each other's changes"
+
+        # Let's simulate instantiating BloomFilters in two threads, both
+        # pointed at the same Memcache key.  I've named these BloomFilters
+        # self.thread1 and self.thread2 for clarity's sake.
+
+        # When we update the BloomFilter in thread 1, ...
+        self.thread1.update({'rajiv', 'raj'})
+
+        # ... notice that the BloomFilter in thread 2 doesn't automatically get
+        # updated:
+        assert 'rajiv' not in self.thread2
+        assert 'raj' not in self.thread2
+
+        # But now when we update the BloomFilter in thread 2, ...
+        self.thread2.update({'dan', 'eric'})
+
+        # ... notice that this BloomFilter in thread 2 first pulls in thread
+        # 1's changes, then applies its own:
+        assert 'rajiv' in self.thread2
+        assert 'raj' in self.thread2
+        assert 'dan' in self.thread2
+        assert 'eric' in self.thread2
+
+        # So even though our local BloomFilter objects might get out of sync,
+        # ...
+        assert 'dan' not in self.thread1
+        assert 'eric' not in self.thread1
+
+        # ... whenever we update them, we first merge in changes from Memcache,
+        # which is always in sync:
+        self.thread1.update({'jenny', 'will'})
+        assert 'dan' in self.thread1
+        assert 'eric' in self.thread1

@@ -1,17 +1,15 @@
 #-----------------------------------------------------------------------------#
 #   test_doctests.py                                                          #
 #                                                                             #
-#   Copyright (c) 2017, Rajiv Bakulesh Shah, original author.                 #
+#   Copyright (c) 2017-2018, Rajiv Bakulesh Shah, original author.            #
 #   All rights reserved.                                                      #
 #-----------------------------------------------------------------------------#
-
 
 
 import doctest
 import importlib
 import os
 import unittest
-
 
 
 class DoctestTests(unittest.TestCase):
