@@ -8,8 +8,12 @@
 
 from .bloom import BloomFilter
 from .contexttimer import ContextTimer
-from .exceptions import BloomFilterException
-from .exceptions import CheckAndSetError
+from .exceptions import (
+    BloomFilterException,
+    CheckAndSetError,
+    ReleaseUnlockedLock,
+)
+from .memlock import MemLock
 
 
 __all__ = [
@@ -17,4 +21,6 @@ __all__ = [
     'BloomFilterException',
     'CheckAndSetError',
     'ContextTimer',
+    'MemLock',
+    'ReleaseUnlockedLock',
 ]
