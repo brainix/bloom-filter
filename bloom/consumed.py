@@ -34,6 +34,12 @@ class RecentlyConsumed(Base):
     _RANDOM_KEY_PREFIX = 'tmp:consumed:'
     _MAXLEN = 1000
 
+    # If _NOREPLY is False, then we wait for each Memcache command to complete
+    # before moving on to the next line of code.  _NOREPLY should be False when
+    # running our unit tests (to make our tests run deterministically), but
+    # True on production (so that our code runs faster).
+    _NOREPLY = True
+
     def __init__(self, memcache=None, key=None, maxlen=_MAXLEN):
         super(RecentlyConsumed, self).__init__(memcache=memcache, key=key)
         self._maxlen = maxlen
@@ -63,9 +69,9 @@ class RecentlyConsumed(Base):
         if self._set:
             list_ = list(self._deque)
             string = json.dumps(list_)
-            self.memcache.set(self.key, string, noreply=True)
+            self.memcache.set(self.key, string, noreply=self._NOREPLY)
         else:
-            self.memcache.delete(self.key)
+            self.memcache.delete(self.key, noreply=self._NOREPLY)
 
     def _prune_to_maxlen(self):
         while self.maxlen is not None and len(self) > self.maxlen:

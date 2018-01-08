@@ -161,7 +161,7 @@ class BloomFilterTests(unittest.TestCase):
         assert repr(dilberts) == '<BloomFilter key=dilberts>'
 
 
-class RecentlyConsumedTests(unittest.TestCase):
+class RecentlyConsumedSimulationTests(unittest.TestCase):
     "Simulate reddit's recently consumed problem to test our Bloom filter."
 
     def setUp(self):
