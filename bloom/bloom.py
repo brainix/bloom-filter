@@ -99,7 +99,7 @@ class BloomFilter(Base):
         >>> dilberts.clear()
     '''
 
-    _RANDOM_KEY_PREFIX = 'bloom:'
+    _RANDOM_KEY_PREFIX = 'tmp:bloom:'
 
     def __init__(self, iterable=frozenset(), memcache=None, key=None,
                  num_values=1000, false_positives=0.001):

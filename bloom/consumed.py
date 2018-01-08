@@ -31,7 +31,7 @@ class RecentlyConsumed(Base):
     instances/accesses.  A good choice for such a lock is .memlock.MemLock.
     '''
 
-    _RANDOM_KEY_PREFIX = 'consumed:'
+    _RANDOM_KEY_PREFIX = 'tmp:consumed:'
     _MAXLEN = 1000
 
     def __init__(self, memcache=None, key=None, maxlen=_MAXLEN):

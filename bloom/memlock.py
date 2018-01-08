@@ -61,7 +61,7 @@ class MemLock(Base):
         [True, False]
     '''
 
-    _RANDOM_KEY_PREFIX = 'memlock:'
+    _RANDOM_KEY_PREFIX = 'tmp:memlock:'
     _AUTO_RELEASE_TIME = 1
     _RETRY_DELAY = 0.2
 
