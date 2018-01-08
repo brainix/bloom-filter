@@ -28,3 +28,12 @@ class CheckAndSetError(BloomFilterException):
             key=key,
             retriable=True,
         )
+
+
+class ReleaseUnlockedLock(BloomFilterException):
+    def __init__(self, memcache=None, key=None):
+        super(ReleaseUnlockedLock, self).__init__(
+            memcache=memcache,
+            key=key,
+            retriable=False,
+        )

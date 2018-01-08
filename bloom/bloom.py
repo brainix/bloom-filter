@@ -6,25 +6,19 @@
 #-----------------------------------------------------------------------------#
 
 
-import collections
 import functools
 import itertools
 import json
 import math
-import random
-import string
 
 import mmh3
 from bitarray import bitarray
-from pymemcache.client.base import Client
 
+from .base import Base, run_doctests
 from .exceptions import CheckAndSetError
 
 
-MemcacheServer = collections.namedtuple('MemcacheServer', ('hostname', 'port'))
-
-
-class BloomFilter(object):
+class BloomFilter(Base):
     '''Memcache-backed Bloom filter with an API similar to Python sets.
 
     Bloom filters are a powerful data structure that help you to answer the
@@ -105,19 +99,11 @@ class BloomFilter(object):
         >>> dilberts.clear()
     '''
 
-    _DEFAULT_MEMCACHE_SERVER = MemcacheServer(hostname='localhost', port=11211)
     _RANDOM_KEY_PREFIX = 'bloom:'
-    _RANDOM_KEY_CHARS = ''.join((string.digits, string.ascii_lowercase))
-    _RANDOM_KEY_LENGTH = 16
 
     def __init__(self, iterable=frozenset(), memcache=None, key=None,
                  num_values=1000, false_positives=0.001):
-        self.memcache = memcache or Client(
-            self._DEFAULT_MEMCACHE_SERVER,
-            connect_timeout=1,
-            timeout=1,
-        )
-        self.key = key or self._random_key()
+        super(BloomFilter, self).__init__(memcache=memcache, key=key)
         self.num_values = num_values
         self.false_positives = false_positives
         self._load_bit_array()
@@ -126,13 +112,6 @@ class BloomFilter(object):
     def __del__(self):  # pragma: no cover
         if self.key.startswith(self._RANDOM_KEY_PREFIX):
             self.clear()
-
-    @classmethod
-    def _random_key(cls):
-        random_char = functools.partial(random.choice, cls._RANDOM_KEY_CHARS)
-        suffix = ''.join(random_char() for _ in xrange(cls._RANDOM_KEY_LENGTH))
-        random_key = ''.join((cls._RANDOM_KEY_PREFIX, suffix))
-        return random_key
 
     def size(self):
         '''The required number of bits (m) given n and p.
@@ -307,20 +286,10 @@ class BloomFilter(object):
         len_ = -float(self.size()) / self.num_hashes() * math.log(1 - float(num_bits_set) / self.size())
         return int(math.floor(len_))
 
-    def __repr__(self):
-        'Return the string representation of a BloomFilter.  O(1)'
-        return '<{} key={}>'.format(self.__class__.__name__, self.key)
-
-
-def main():                 # pragma: no cover
-    # Run the doctests in this module with:
-    #   $ source venv/bin/activate
-    #   $ python -m bloom
-    #   $ deactivate
-    import doctest
-    import sys
-    results = doctest.testmod()
-    sys.exit(bool(results.failed))
 
 if __name__ == '__main__':  # pragma: no cover
-    main()
+    # Run the doctests in this module with:
+    #   $ source venv/bin/activate
+    #   $ python -m bloom.bloom
+    #   $ deactivate
+    run_doctests()
