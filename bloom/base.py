@@ -21,7 +21,7 @@ MemcacheServer = collections.namedtuple('MemcacheServer', ('hostname', 'port'))
 
 class Base(object):
     _DEFAULT_MEMCACHE_SERVER = MemcacheServer(hostname='localhost', port=11211)
-    _RANDOM_KEY_PREFIX = 'base:'
+    _RANDOM_KEY_PREFIX = 'tmp:base:'
     _RANDOM_KEY_CHARS = ''.join((string.digits, string.ascii_lowercase))
     _RANDOM_KEY_LENGTH = 16
 

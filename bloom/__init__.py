@@ -7,6 +7,7 @@
 
 
 from .bloom import BloomFilter
+from .consumed import RecentlyConsumed
 from .contexttimer import ContextTimer
 from .exceptions import (
     BloomFilterException,
@@ -22,5 +23,6 @@ __all__ = [
     'CheckAndSetError',
     'ContextTimer',
     'MemLock',
+    'RecentlyConsumed',
     'ReleaseUnlockedLock',
 ]
